@@ -38,3 +38,4 @@ frontend/package-lock.json
 frontend/.env
 frontend/out/
 frontend/dist/
+frontend/src/config/firebase.js
