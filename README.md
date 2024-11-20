@@ -32,7 +32,8 @@ To set up and run the system, follow these steps:
      ```
    - Install the required Python packages:
      ```bash
-     pip install tensorflow numpy matplotlib pillow h5py opencv-python flask flask-cors
+     pip install tensorflow numpy matplotlib pillow h5py opencv-python flask flask-cors pyserial
+     
      ```
    - Run the Python backend:
      ```bash
