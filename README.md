@@ -35,6 +35,7 @@ To set up and run the system, follow these steps:
      python -m pip install -r requirements.txt
      
      ```
+   - In app.py replace the adruino port with you port connected to arduino, also add adurino.cpp to adruino
    - Run the Python backend:
      ```bash
      python app.py
