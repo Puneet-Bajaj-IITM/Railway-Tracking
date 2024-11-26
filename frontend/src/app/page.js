@@ -235,12 +235,17 @@ export default function Home() {
         <Heading size="lg" color="orange.300">Railway Tracking System</Heading>
         <Text fontSize="md" color="gray.400">A modern way to track fares using facial recognition.</Text>
 
-        {!cameraMode && (
-          <Stack spacing={4} alignItems="center">
-            <Text fontSize="sm" color="white">Select a picture to recognize or use your camera</Text>
-            <HStack spacing={4}>
-
-              <Select
+        (
+          <VStack spacing={4} alignItems="center">
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/png"
+              width={320}
+              height={240}
+              videoConstraints={{ facingMode: "user" }}
+            />
+                          <Select
                 bg={"transparent"}
                 color={'white'}
                 w={'200px'}
@@ -253,32 +258,12 @@ export default function Home() {
                 <option style={{ color: "black" }} value="B">Camera B</option>
                 <option style={{ color: "black" }} value="C">Camera C</option>
               </Select>
-
-              <Button onClick={() => inputRef?.current?.click()} as="label" colorScheme="blue" size="md">
-                Select Picture
-              </Button>
-              <input style={{ display: 'none' }} ref={inputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
-              <Button colorScheme="blue" size="md" onClick={() => setCameraMode(true)}>Use Camera</Button>
-            </HStack>
-          </Stack>
-        )}
-
-        {cameraMode && (
-          <VStack spacing={4} alignItems="center">
-            <Webcam
-              audio={false}
-              ref={webcamRef}
-              screenshotFormat="image/png"
-              width={320}
-              height={240}
-              videoConstraints={{ facingMode: "user" }}
-            />
             <HStack spacing={4}>
               <Button colorScheme="green" size="md" onClick={handleCameraCapture}>Capture</Button>
               <Button colorScheme="red" size="md" onClick={() => setCameraMode(false)}>Cancel</Button>
             </HStack>
           </VStack>
-        )}
+        )
 
         {picture && (
           <Box>
