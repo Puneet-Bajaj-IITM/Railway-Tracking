@@ -87,6 +87,7 @@ export default function Home() {
       let list = []
       const formData = new FormData();
       formData.append('image', picture);
+      formData.append('camera', selectedCamera);
       let wallet = 0
 
       await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify`, formData)
