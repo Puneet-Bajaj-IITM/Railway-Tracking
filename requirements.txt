@@ -4,5 +4,5 @@ h5py==3.8.0
 matplotlib==3.5.3
 numpy==1.21.6
 Pillow==9.5.0
-pyserial==3.5
+pyserial
 tensorflow==2.11.0
