@@ -87,12 +87,15 @@ def signup():
 
     return jsonify({'message': 'Signup successful'}), 200
 
+
+
 @app.route('/verify', methods=['POST'])
 def verify():
-    if 'image' not in request.files:
-        return jsonify({'error': 'Image file required'}), 400
+    if 'image' not in request.files or 'camera' not in request.form:
+        return jsonify({'error': 'Image file and camera parameter required'}), 400
 
     image_file = request.files['image']
+    camera = request.form['camera']  # Camera parameter (A, B, or C)
 
     # Save img to a temp location
     image_path = "temp/verify.jpg"
@@ -105,7 +108,7 @@ def verify():
     encoding = img_to_encoding(image_path, FRmodel).flatten()
     os.remove(image_path)  # Remove temp img
 
-    # Fetch all user encodings db
+    # Fetch all user encodings from DB
     users = get_all_users_from_db()
     for name, db_encoding in users:
         db_encoding = np.array(list(map(float, db_encoding.split(','))))
@@ -117,9 +120,18 @@ def verify():
     if min_dist > 0.7 or identity is None:
         return jsonify({'message': 'Not recognized'}), 200
     else:
-        # command Arduino to open the door
-        arduino.write(b'OPEN\n')
+        # Check which camera was used and send appropriate command to Arduino
+        if camera == 'A':
+            arduino.write(b'OPEN_A\n') 
+        elif camera == 'B':
+            arduino.write(b'OPEN_B\n')  
+        elif camera == 'C':
+            arduino.write(b'OPEN_C\n') 
+        else:
+            return jsonify({'error': 'Invalid camera selected'}), 400
+
         return jsonify({'username': identity}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
