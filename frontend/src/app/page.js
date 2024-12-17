@@ -68,6 +68,17 @@ export default function Home() {
     };
   }, []);
 
+  const calculateFare = (from, to) => {
+    const cameras = [from, to].sort();
+    const cameraPair = `${cameras[0]}_${cameras[1]}`;
+    const fareMapping = {
+      "A_B": parseFloat(process.env.NEXT_PUBLIC_CAMERA_A_B_FARE || "0"),
+      "A_C": parseFloat(process.env.NEXT_PUBLIC_CAMERA_A_C_FARE || "0"),
+      "B_C": parseFloat(process.env.NEXT_PUBLIC_CAMERA_B_C_FARE || "0"),
+    };
+    return fareMapping[cameraPair] || 0;
+  };
+  
   const handleCameraCapture = () => {
     const imageSrc = webcamRef.current.getScreenshot();
     fetch(imageSrc)
@@ -85,25 +96,109 @@ export default function Home() {
       const formData = new FormData();
       formData.append("image", picture);
       formData.append("camera", selectedCamera);
+      let list = []
+      let wallet = 0
 
-      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify`, formData);
-      toast({
-        title: "Submitted.",
-        description: "Image verified.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/verify`, formData)
+        .then(async (response) => {
+          if (response.data.username) {
+            await getDocs(query(collection(db, 'Data'), where('email', '==', response.data.username), limit(1), orderBy("timestamp", "desc")))
+              .then((snaphshot) => {
+                snaphshot.forEach((docs) => {
+                  list.push({ ...docs.data(), id: docs.id })
+                })
+              })
+            if (list.length == 0) {
+              await addDoc(collection(db, 'Data'), {
+                email: response.data.username,
+                timestamp: moment().valueOf(),
+                start: selectedCamera
+              })
+                .then(() => {
+                  toast({
+                    title: "Submitted.",
+                    description: "Image verified.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                  });
+
+                })
+            } else {
+              if (list[0].end) {
+                await addDoc(collection(db, 'Data'), {
+                  email: response.data.username,
+                  timestamp: moment().valueOf(),
+                  start: selectedCamera
+                })
+                  .then(() => {
+                    toast({
+                      title: "Submitted.",
+                      description: "Image verified.",
+                      status: "success",
+                      duration: 5000,
+                      isClosable: true,
+                    });
+
+                  })
+              } else {
+                const fare = calculateFare(list[0].start, selectedCamera);
+                await updateDoc(doc(db, 'Data', list[0].id), {
+                  end: selectedCamera,
+                  fare: fare
+                }).then(async () => {
+                  await getDoc(doc(db, 'Users', response.data.username))
+                    .then(async (docs) => {
+                      wallet = docs.data().wallet
+                      wallet = wallet - fare
+                      await updateDoc(doc(db, 'Users', response.data.username), {
+                        wallet: wallet
+                      })
+                        .then(() => {
+                          toast({
+                            title: "Submitted.",
+                            description: "Image verified.",
+                            status: "success",
+                            duration: 5000,
+                            isClosable: true,
+                          });
+                          if (wallet < 10) {
+                            toast({
+                              title: "Low balance.",
+                              description: "Kindly recharge your account.",
+                              status: "error",
+                              duration: 5000,
+                              isClosable: true,
+                            });
+                          }
+                        })
+                    })
+                })
+              }
+            }
+
+          }
+          if (response.data.message) {
+            toast({
+              title: "Error.",
+              description: "Image not verified.",
+              status: "error",
+              duration: 5000,
+              isClosable: true,
+            });
+          }
+
+        })
+
     } catch (error) {
-      console.error(error);
+      console.log(error)
       toast({
         title: "Submission failed.",
         description: "Please try again.",
         status: "error",
         duration: 5000,
         isClosable: true,
-      });
-    } finally {
+      });finally {
       setLoading(false);
       setSelectedCamera("");
       setPicture(null);
